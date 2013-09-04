@@ -1,0 +1,105 @@
+<html><head>
+	
+	<title>ToDo List</title>
+	
+	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="http://netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" />
+	<style type="text/css">
+		#inputError {
+		    display:none;
+		}
+	</style>
+	
+</head><body>
+	
+	<div class="container">
+    
+        <div class="row">
+            
+            <div class="col-md-6 col-md-offset-3">
+                <h1 class="text-center"><i class="icon-foursquare icon-3x"></i></h1>
+                <hr />
+                <div class="alert alert-danger" id="inputError">Not so fast grasshopper!</div>
+                <p><input type="text" id="todoInput" class="form-control" placeholder="To Do Item..." /></p>
+                <p><button class="btn btn-primary form-control" id="addSubmit">Add!</button></p>
+                <ul class="list-group" id="items">
+                    <!-- To Do Items will be Placed Here -->
+                </ul>
+            </div>
+            
+        </div>
+        
+    </div>
+    
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript">
+	    
+	    $(function(){
+		   
+		    var inputElement = $('#todoInput'),
+		        listContainer = $('#items'),
+		        errorElement = $('#inputError'),
+		        submitButton = $('#addSubmit');
+		    
+		    var inputError = function(){
+		        errorElement.slideDown(400);
+		        setTimeout(function(){
+		            errorElement.slideUp(400);
+		        }, 5000 );
+		    }
+		    
+		    var getItems = function(){
+			    $.getJSON('/mylist', function( response ){
+					console.log('My List:', response.list ); 
+					if( response.list.length > 0 ){
+						for( var x = 0; x < response.list.length; x++){
+							insertIntoPage( response.list[x] );
+						}
+					}
+			    });
+		    }
+		    
+		    var addItem = function(){
+		        todoItem = inputElement.val();
+		        if(todoItem == '')
+		            return inputError();
+		            
+		        $.post('/save',{ item:todoItem }, function(res){
+		        	console.log('Save Response:', res);
+		        });
+		        
+		        insertIntoPage( todoItem );
+		        
+		        // Reset the input field:
+		        inputElement.val('');
+		    };
+		    
+		    var insertIntoPage = function( todoItem ){
+			    var html = '<li class="list-group-item" data-value="'+todoItem+'">'+
+		            '<i class="icon-minus-sign pull-right"></i> '+
+		                todoItem+
+		            '</li>';
+		        listContainer.append( html );
+		    }
+		    
+		    inputElement.on('keydown',function(e){
+		        if(e.which == 13)
+		            addItem();
+		    });
+		    
+		    submitButton.on('click', addItem );
+		    
+		    listContainer.on('click','.icon-minus-sign',function(){
+	        	$(this).parent().slideUp(); 
+	        	$.post('/delete', { item:$(this).parent().data('value') }, function( res ){
+		        	console.log('Delete Response:', res );
+	        	});
+		    });
+		    
+		    getItems();
+		    
+		});
+	    
+    </script>
+	
+</body></html>
